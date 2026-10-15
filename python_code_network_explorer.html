@@ -1,0 +1,204 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PyCodeGraph</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1322;color:#e7eef9;font:14px system-ui,Segoe UI,Arial}header{padding:16px 22px;border-bottom:1px solid #26374e;display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:20px;margin:0}small,.muted{color:#a3b6cf}button,input,textarea,select{font:inherit}button{background:#253b59;color:#eef5ff;border:1px solid #426083;border-radius:7px;padding:8px 11px;cursor:pointer}button:hover{background:#345276}button.primary{background:#2366a8;border-color:#3487d2}button:disabled{opacity:.45;cursor:not-allowed}.layout{display:grid;grid-template-columns:320px minmax(0,1fr);height:calc(100vh - 68px)}aside{padding:16px;overflow:auto;border-right:1px solid #26374e;background:#111e30}main{position:relative;min-width:0;overflow:hidden}section{margin-bottom:17px}section>h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#c0d1e8;margin:0 0 9px}textarea{resize:vertical;min-height:125px;width:100%;background:#0b1627;color:#eaf2fc;border:1px solid #39516f;border-radius:7px;padding:10px;font:12px/1.5 ui-monospace,Consolas,monospace}input[type=text],input[type=search]{width:100%;padding:8px;background:#0b1627;color:#eef5ff;border:1px solid #39516f;border-radius:7px}input[type=range]{width:100%;accent-color:#66b7f5}.btnrow{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.filepick{display:block;border:1px dashed #577799;padding:13px;text-align:center;border-radius:8px;cursor:pointer;color:#cde4ff}.filepick input{display:none}.stat{font-size:12px;color:#b7c8dc;margin:8px 0}.checks{display:grid;gap:7px}.checks label{cursor:pointer}.legend{display:flex;flex-wrap:wrap;gap:10px;color:#b4c6dd;font-size:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}#graph{display:block;width:100%;height:100%;touch-action:none;cursor:grab;background:radial-gradient(circle at center,#13243a,#0a1322)}#graph.dragging{cursor:grabbing}.edge{stroke:#67809e;stroke-opacity:.48;stroke-width:1.25;fill:none}.edge.active{stroke:#ffcc70;stroke-opacity:1;stroke-width:2.2}.node{cursor:move}.node circle{stroke:#e6efff;stroke-opacity:.55;stroke-width:1}.node text{font:11px system-ui;fill:#e7eef9;paint-order:stroke;stroke:#0b1322;stroke-width:3px;stroke-linejoin:round;pointer-events:none}.node.active circle{stroke:#ffcc70;stroke-width:3}.hidden{display:none}.toolbar{position:absolute;top:12px;right:12px;display:flex;gap:7px;z-index:2}.info{position:absolute;bottom:14px;right:14px;max-width:370px;background:#15243aeF;border:1px solid #3b5677;border-radius:9px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:42%;overflow:auto}.info b{font-size:14px}.placeholder{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#a9c0d8;pointer-events:none;max-width:350px}.help{font-size:12px;line-height:1.5;color:#a8bbd1}.warning{color:#ffcf86}@media(max-width:750px){.layout{grid-template-columns:1fr;grid-template-rows:360px minmax(350px,1fr);height:auto;min-height:100vh}aside{border-right:0;border-bottom:1px solid #26374e}main{height:65vh}header{align-items:flex-start;flex-direction:column}}
+</style></head><body><header><div><h1>PyCodeGraph</h1><small>Upload or paste Python code → analyze calls and imports → explore the dependency graph. Runs locally and offline.</small></div><div class="legend"><span><i class="dot" style="background:#4b91eb"></i>Local functions</span><span><i class="dot" style="background:#e6ad61"></i>Imported symbols</span><span><i class="dot" style="background:#3bbfa2"></i>Packages</span></div></header><div class="layout"><aside>
+<section><h2>1 · Source code</h2><label class="filepick">Choose one or more .py files<input id="files" type="file" accept=".py,.pyi,text/x-python" multiple></label><div class="stat" id="filesLabel">No uploaded files</div><div class="muted" style="margin:9px 0">Or paste Python code:</div><textarea id="source" spellcheck="false" placeholder="import numpy as np\n\ndef main():\n    return np.array([1, 2, 3])"></textarea><div class="btnrow"><button class="primary" id="analyze">Analyze dependencies</button><button id="example">Load example</button><button id="clear">Clear</button></div><div class="stat" id="status">Ready. Uploaded files and pasted code can be analyzed together.</div></section>
+<section><h2>2 · Explore</h2><input id="search" type="search" placeholder="Search functions, modules…"><div class="checks" style="margin-top:10px"><label><input id="functions" type="checkbox" checked> Local functions</label><label><input id="symbols" type="checkbox" checked> Imported symbols</label><label><input id="packages" type="checkbox" checked> Packages</label><label><input id="calls" type="checkbox" checked> Function call edges</label><label><input id="imports" type="checkbox" checked> External API call edges</label><label><input id="references" type="checkbox" checked> Non-call reference edges</label><label><input id="provenance" type="checkbox" checked> Import provenance edges</label></div><div class="btnrow"><button id="fit">Fit network</button><button id="reset">Reset positions</button></div><label for="size">Node and text size: <strong id="sizeValue">100%</strong></label><input id="size" type="range" min="50" max="250" value="100" step="5"><div class="stat" id="counts">No graph yet</div></section>
+<section><h2>3 · Export</h2><div class="btnrow"><button id="jsonExport" disabled>Download JSON</button><button id="htmlExport" disabled>Export graph HTML</button></div></section>
+<section><h2>About</h2><div class="help">PyCodeGraph is a free, interactive tool for visualizing the structure of Python code. Upload a Python script or paste your code to explore its functions, imports, and package dependencies through an interactive network. The tool was vibe coded as a lightweight, accessible way to understand how different parts of a Python script relate to one another, without installing additional software.</p></div></section>
+<section><h2>Understanding the Node Types</h2><div class="help">Click an orange or green node to see its import status: referenced, potentially unused, or unresolved. Floating nodes alone do not prove an import is unused. The network organizes code elements into three categories: Local Functions (Blue): Functions defined within your Python code. Imported Symbols (Orange): Functions, classes, and other symbols imported from external modules. Packages (Green): Modules and packages that provide the imported symbols.</p></div></section>
+<section><h2>Privacy</h2><div class="help">All analysis runs locally in your browser. Your code is not uploaded to a server. </p></div></section>
+<section><h2>Controls</h2><div class="help">Scroll to zoom at the cursor. Drag empty space to pan. Drag a node to move its immediate neighbors by 45% and second-degree neighbors by 15%. Click a node to inspect its relationships. </p></div></section>
+<section><h2>limitations</h2><div class="help">This offline analyzer uses a lightweight JavaScript source scanner, not Python's full AST. It recognizes common <code>def</code>, <code>class</code>, <code>import</code>, <code>from ... import</code>, and explicit calls and non-call references (including attributes). The graph uses three node categories: local functions, imported symbols, and packages. Dynamic imports, alias shadowing, star imports, and ambiguous or indirect references may be missed or unresolved. Import statuses are best-effort, not proof of unused code. The source code is never executed or uploaded.</p></div></section>
+</aside><main><svg id="graph" xmlns="http://www.w3.org/2000/svg"><g id="world"><g id="edges"></g><g id="nodes"></g></g></svg><div class="toolbar"><button id="zoomIn" title="Zoom in">+</button><button id="zoomOut" title="Zoom out">−</button></div><div id="placeholder" class="placeholder">Paste Python code or upload .py files, then select <b>Analyze dependencies</b>.</div><div id="info" class="info" hidden></div></main></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
+const colors={function:'#4b91eb',symbol:'#e6ad61',package:'#3bbfa2'};
+let sources=[],nodes=[],edges=[],positions=new Map(),selected=null,scale=1,tx=0,ty=0,nodeScale=1,drag=null,moved=false;
+const svg=$('graph'),world=$('world'),edgeLayer=$('edges'),nodeLayer=$('nodes');
+const escapeRe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function cleanSource(code){ // Keep newlines/indentation and mask strings/comments, including triple-quoted strings.
+ let out='',i=0,quote=null,triple=false,escaped=false;
+ while(i<code.length){let c=code[i];if(quote){if(c==='\n'){out+='\n';i++;if(!triple){quote=null}continue}if(c==='\\'&&!escaped){escaped=true;out+=' ';i++;continue}if(c===quote&&!escaped&&(!triple||code.slice(i,i+3)===quote.repeat(3))){let n=triple?3:1;out+=' '.repeat(n);i+=n;quote=null;triple=false;continue}escaped=false;out+=' ';i++;continue}if(c==='#'){while(i<code.length&&code[i]!=='\n'){out+=' ';i++}continue}if(c==='\''||c==='"'){quote=c;triple=code.slice(i,i+3)===c.repeat(3);let n=triple?3:1;out+=' '.repeat(n);i+=n;continue}out+=c;i++}return out;
+}
+function parse(files){
+ const nm=new Map(),es=new Map(),importsByFile=new Map(),defsByFile=new Map(),rawCalls=[],referenceHits=[];
+ function node(id,label,kind,file='',line=0){if(!nm.has(id))nm.set(id,{id,label,kind,file,line,status:'unresolved'});return id}
+ function edge(a,b,type){if(a===b)return;es.set([a,b,type].join('|'),{a,b,type})}
+ function pkg(name){return node('pkg:'+name,name,'package')}
+ function symbol(name){let id=node('sym:'+name,name,'symbol');let mod=name.includes('.')?name.slice(0,name.lastIndexOf('.')):name;edge(id,pkg(mod),'provenance');return id}
+ const builtin=new Set(['print','len','range','int','str','float','list','dict','set','tuple','enumerate','zip','min','max','sum','abs','all','any','sorted','reversed','isinstance','super','open','iter','next','bool','type','object','property','staticmethod','classmethod','Exception','ValueError','RuntimeError','getattr','setattr','hasattr','id','map','filter','round']);
+ const skip=new Set(['if','for','while','with','return','raise','assert','yield','except','lambda','def','class','async','await','del','not']);
+ for(const file of files){
+  const cleaned=cleanSource(file.code),lines=cleaned.split(/\r?\n/),stack=[],imports=new Map(),defs=new Map();
+  const callerAt=[],headerAt=new Set(),lineOffsets=[];
+  importsByFile.set(file.name,imports);defsByFile.set(file.name,defs);
+  let offset=0,headerEnd=-1;
+  for(let idx=0;idx<lines.length;idx++){
+   const line=lines[idx],trim=line.trim(),indent=(line.match(/^\s*/)||[''])[0].replace(/\t/g,'    ').length;
+   lineOffsets.push(offset);offset+=line.length+1;
+   if(!trim){callerAt[idx]=stack.slice().reverse().find(s=>s.kind==='function')?.id||null;continue}
+   if(idx<=headerEnd){headerAt.add(idx);callerAt[idx]=null;continue}
+   while(stack.length&&indent<=stack[stack.length-1].indent)stack.pop();
+   const m=trim.match(/^(?:async\s+)?def\s+([A-Za-z_]\w*)\b/),cl=trim.match(/^class\s+([A-Za-z_]\w*)\b/);
+   if(m||cl){
+    const name=(m||cl)[1],parent=stack.map(s=>s.name).join('.'),qualified=parent?parent+'.'+name:name;
+    const id='def:'+file.name+':'+qualified;
+    if(m){node(id,name+'()','function',file.name,idx+1);defs.set(name,(defs.get(name)||[]).concat(id))}
+    const kind=m?'function':'class';
+    // Locate the end of a potentially multiline signature, so its arguments are not treated as calls.
+    let depth=0,opened=false,end=idx;
+    for(let j=idx;j<lines.length;j++){
+     const segment=j===idx?lines[j].slice(lines[j].indexOf(name)+name.length):lines[j];
+     for(const ch of segment){if(ch==='('){depth++;opened=true}else if(ch===')')depth=Math.max(0,depth-1);else if(ch===':'&&depth===0){end=j;break}}
+     end=j;
+     if(opened&&depth===0&&segment.includes(':'))break;
+     if(j-idx>150)break;
+    }
+    for(let j=idx;j<=end;j++){headerAt.add(j);callerAt[j]=null}
+    headerEnd=end;
+    stack.push({id,name,qualified,indent,kind});
+    // Handle one-line function suites following the header colon.
+    if(end===idx&&m){let colon=line.indexOf(':');if(colon>=0&&line.slice(colon+1).trim()){
+     const body=line.slice(colon+1),rx=/(?<![\w.])([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\(/g;let match;
+     while((match=rx.exec(body)))if(!skip.has(match[1])&&!builtin.has(match[1]))rawCalls.push({caller:id,name:match[1],file:file.name});
+    }}
+    continue;
+   }
+   const imp=trim.match(/^import\s+(.+)$/),from=trim.match(/^from\s+([.\w]+)\s+import\s+(.+)$/);
+   if(imp){for(const part of imp[1].split(',')){const z=part.trim().match(/^([\w.]+)(?:\s+as\s+(\w+))?$/);if(!z)continue;const target=z[1],alias=z[2]||target.split('.')[0];imports.set(alias,{target,kind:'module'});pkg(target);symbol(target)}}
+   if(from){const mod=from[1];pkg(mod);for(const part of from[2].replace(/[()]/g,'').split(',')){const z=part.trim().match(/^(\w+|\*)(?:\s+as\s+(\w+))?$/);if(!z)continue;const target=mod+'.'+z[1];imports.set(z[2]||z[1],{target,kind:'symbol'});symbol(target)}}
+   callerAt[idx]=imp||from?null:stack.slice().reverse().find(s=>s.kind==='function')?.id||null;
+  }
+  // Detect non-call references in executable code, including attribute access and bare values.
+  // An import declaration is not itself a usage. Scanning sanitized text avoids comments/strings.
+  // One-line function bodies are retained, but signature text is excluded.
+  for(let idx=0;idx<lines.length;idx++){
+   let segment=lines[idx];
+   const trim=segment.trim();
+   if(!trim || /^(?:import\s|from\s)/.test(trim))continue;
+   if(headerAt.has(idx)){
+    const defMatch=trim.match(/^(?:async\s+)?def\s+\w+\b/);
+    if(!defMatch || !segment.includes(':'))continue;
+    // Only inspect statements after the top-level header colon.
+    let depth=0,colon=-1;
+    for(let k=0;k<segment.length;k++){
+     if(segment[k]==='(')depth++;
+     else if(segment[k]===')')depth=Math.max(0,depth-1);
+     else if(segment[k]===':'&&depth===0){colon=k;break}
+    }
+    if(colon<0)continue;
+    segment=segment.slice(colon+1);
+   }
+   const caller=callerAt[idx] || (headerAt.has(idx) ? stack.length && null : null);
+   const inline=headerAt.has(idx) && /^\s*(?:async\s+)?def\s+/.test(lines[idx]);
+   const inlineDef=inline ? lines[idx].match(/^\s*(?:async\s+)?def\s+(\w+)/) : null;
+   const inlineCaller=inlineDef ? [...defs.get(inlineDef[1])||[]].at(-1) : null;
+   const owner=caller||inlineCaller;
+   const token=/\b([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\b/g;let found;
+   while((found=token.exec(segment))){
+    const chain=found[1],head=chain.split('.')[0];
+    if(!imports.has(head))continue;
+    const next=segment.slice(found.index+chain.length).match(/^\s*([\s\S]?)/);
+    const isCall=next&&next[1]==='(';
+    referenceHits.push({file:file.name,caller:owner,head,chain,isCall});
+   }
+  }
+  // Match calls across line breaks, using the scope of the line containing the name.
+  const rx=/(?<![\w.])([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s*\(/g;let match,at=0;
+  while((match=rx.exec(cleaned))){
+   while(at+1<lineOffsets.length&&lineOffsets[at+1]<=match.index)at++;
+   const name=match[1],caller=callerAt[at];
+   if(!caller||headerAt.has(at)||skip.has(name)||builtin.has(name))continue;
+   rawCalls.push({caller,name,file:file.name});
+  }
+ }
+ for(const c of rawCalls){
+  const imports=importsByFile.get(c.file),defs=defsByFile.get(c.file),parts=c.name.split('.'),head=parts[0];
+  if(imports.has(head)){const target=imports.get(head).target+(parts.length>1?'.'+parts.slice(1).join('.'):'');edge(c.caller,symbol(target),'use');continue}
+  const local=(defs.get(parts[parts.length-1])||[]);
+  // Resolve lexical scope first, avoiding false ambiguity from same-named methods elsewhere.
+  const callerPath=c.caller.slice(('def:'+c.file+':').length),scope=callerPath.split('.');scope.pop();
+  let resolved=null;
+  if(parts.length===1){
+   for(let depth=scope.length;depth>=0&&!resolved;depth--){
+    const qualified=scope.slice(0,depth).concat(c.name).join('.');
+    const id='def:'+c.file+':'+qualified;
+    if(nm.has(id))resolved=id;
+   }
+   if(!resolved&&local.length===1)resolved=local[0];
+  }else if((head==='self'||head==='cls')&&parts.length===2){
+   const owner=scope.join('.'),id='def:'+c.file+':'+(owner?owner+'.':'')+parts[1];
+   if(nm.has(id))resolved=id;
+  }
+  if(resolved){edge(c.caller,resolved,'call');continue}
+  if(parts.length===1&&!local.length){
+   const all=[...defsByFile.values()].flatMap(d=>d.get(c.name)||[]);
+   if(all.length===1)edge(c.caller,all[0],'call');
+  }
+  // Unknown receiver types and genuinely ambiguous references remain unresolved.
+ }
+ // Link imported symbols to all explicit references, not just callable uses.
+ // A reference in module scope marks the import referenced but has no function source node.
+ const usedTargets=new Set(), moduleTargets=new Set();
+ for(const hit of referenceHits){
+  const imp=importsByFile.get(hit.file).get(hit.head);
+  if(!imp)continue;
+  const base=imp.target,tail=hit.chain.slice(hit.head.length);
+  usedTargets.add(base);
+  if(!hit.caller){moduleTargets.add(base);continue}
+  if(hit.isCall)continue; // Already represented by the call resolver.
+  edge(hit.caller,symbol(base+tail),'reference');
+  // Keep the original import symbol connected when an attribute is referenced.
+  if(tail)edge(hit.caller,symbol(base),'reference');
+ }
+ // Determine status using actual references rather than provenance connections.
+ for(const [file,imports] of importsByFile){
+  for(const [alias,imp] of imports){
+   const item=nm.get('sym:'+imp.target);
+   if(!item)continue;
+   if(alias==='*'||imp.target.endsWith('.*'))item.status='unresolved';
+   else if(usedTargets.has(imp.target))item.status='referenced';
+   else if(item.status!=='referenced')item.status='potentially unused';
+   if(moduleTargets.has(imp.target))item.scopeNote='Also referenced at module scope';
+  }
+ }
+ // Every derived attribute symbol is referenced when reached via a recognized import.
+ for(const hit of referenceHits){const imp=importsByFile.get(hit.file).get(hit.head);if(!imp)continue;const attr=nm.get('sym:'+imp.target+hit.chain.slice(hit.head.length));if(attr)attr.status='referenced'}
+ for(const item of nm.values())if(item.kind==='package'){
+  const descendants=[...nm.values()].filter(n=>n.kind==='symbol'&&(n.label===item.label||n.label.startsWith(item.label+'.')));
+  item.status=descendants.some(n=>n.status==='referenced')?'referenced':descendants.some(n=>n.status==='unresolved')?'unresolved':'potentially unused';
+ }
+ return {nodes:[...nm.values()],edges:[...es.values()]};
+}
+function element(tag,attrs,parent){let e=document.createElementNS(NS,tag);for(let [k,v]of Object.entries(attrs||{}))e.setAttribute(k,v);parent.appendChild(e);return e}
+function initPositions(){positions=new Map();let n=nodes.length,cols=Math.max(1,Math.ceil(Math.sqrt(n*1.6)));nodes.forEach((node,i)=>{let col=i%cols,row=Math.floor(i/cols);positions.set(node.id,{x:col*180+(row%2)*55,y:row*105})}); // Relax edge lengths deterministically.
+ for(let t=0;t<95&&n<450;t++){let forces=new Map(nodes.map(v=>[v.id,{x:0,y:0}]));for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){let a=positions.get(nodes[i].id),b=positions.get(nodes[j].id),dx=a.x-b.x,dy=a.y-b.y,d2=Math.max(300,dx*dx+dy*dy),f=2400/d2,dist=Math.sqrt(d2);forces.get(nodes[i].id).x+=dx/dist*f;forces.get(nodes[i].id).y+=dy/dist*f;forces.get(nodes[j].id).x-=dx/dist*f;forces.get(nodes[j].id).y-=dy/dist*f}for(const e of edges){let a=positions.get(e.a),b=positions.get(e.b);if(!a||!b)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.max(1,Math.hypot(dx,dy)),f=(d-150)*.009;forces.get(e.a).x+=dx/d*f;forces.get(e.a).y+=dy/d*f;forces.get(e.b).x-=dx/d*f;forces.get(e.b).y-=dy/d*f}for(const v of nodes){let p=positions.get(v.id),f=forces.get(v.id);p.x+=Math.max(-8,Math.min(8,f.x));p.y+=Math.max(-8,Math.min(8,f.y))}}}
+function visibleEdge(e){return e.type==='call'?$('calls').checked:e.type==='use'?$('imports').checked:e.type==='reference'?$('references').checked:$('provenance').checked}
+function visibleNodes(){let enabled={function:$('functions').checked,symbol:$('symbols').checked,package:$('packages').checked};return new Set(nodes.filter(n=>enabled[n.kind]).map(n=>n.id))}
+function render(){edgeLayer.replaceChildren();nodeLayer.replaceChildren();let visible=visibleNodes(),q=$('search').value.trim().toLowerCase(),matches=new Set(nodes.filter(n=>n.label.toLowerCase().includes(q)||n.file.toLowerCase().includes(q)).map(n=>n.id));let neighbor=new Set(matches);if(q)for(const e of edges)if(matches.has(e.a)||matches.has(e.b)){neighbor.add(e.a);neighbor.add(e.b)};
+ for(const e of edges){if(!visibleEdge(e)||!visible.has(e.a)||!visible.has(e.b))continue;let a=positions.get(e.a),b=positions.get(e.b);if(!a||!b)continue;let l=element('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'edge'+(selected&&(e.a===selected||e.b===selected)?' active':''),opacity:q&&!(neighbor.has(e.a)&&neighbor.has(e.b))?.08:1},edgeLayer);l.dataset.a=e.a;l.dataset.b=e.b}
+ for(const n of nodes){if(!visible.has(n.id))continue;let p=positions.get(n.id);let g=element('g',{class:'node'+(selected===n.id?' active':''),transform:`translate(${p.x},${p.y})`,opacity:q&&!neighbor.has(n.id)?.13:1},nodeLayer);g.dataset.id=n.id;element('circle',{r:(n.kind==='function'?9:n.kind==='symbol'?8:10)*nodeScale,fill:colors[n.kind]},g);let text=element('text',{x:13*nodeScale,y:4*nodeScale,'font-size':11*nodeScale,style:`font-size:${11*nodeScale}px`},g);text.textContent=n.label;let title=element('title',{},g);title.textContent=n.label+(n.file?'\n'+n.file+':'+n.line:'')}
+ let baseImports=nodes.filter(n=>n.kind==='symbol'&&n.status);let possiblyUnused=baseImports.filter(n=>n.status==='potentially unused').length,unresolved=baseImports.filter(n=>n.status==='unresolved').length;$('counts').textContent=`${visible.size} visible nodes · ${edges.filter(e=>visibleEdge(e)&&visible.has(e.a)&&visible.has(e.b)).length} edges · ${sources.length} source file(s) · ${possiblyUnused} possibly unused symbols · ${unresolved} unresolved symbols`; $('placeholder').hidden=nodes.length>0;updateInfo();
+}
+function updatePositions(){for(const g of nodeLayer.children){let p=positions.get(g.dataset.id);g.setAttribute('transform',`translate(${p.x},${p.y})`)}for(const l of edgeLayer.children){let a=positions.get(l.dataset.a),b=positions.get(l.dataset.b);l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);l.setAttribute('x2',b.x);l.setAttribute('y2',b.y)}}
+function updateInfo(){let panel=$('info'),n=nodes.find(n=>n.id===selected);panel.hidden=!n;if(!n)return;let incoming=edges.filter(e=>e.b===n.id),outgoing=edges.filter(e=>e.a===n.id);panel.replaceChildren();let title=document.createElement('b');title.textContent=n.label;panel.append(title);let detail=document.createElement('div');detail.textContent=`\nType: ${n.kind}${n.kind!=='function'?'\nImport status: '+(n.status||'unresolved'):''}${n.scopeNote?'\n'+n.scopeNote:''}${n.file?'\nLocation: '+n.file+':'+n.line:''}\n\nUses / calls (${outgoing.length}):\n${outgoing.map(e=>'• '+(nodes.find(x=>x.id===e.b)?.label||e.b)+' ['+e.type+']').join('\n')||'None'}\n\nUsed / called by (${incoming.length}):\n${incoming.map(e=>'• '+(nodes.find(x=>x.id===e.a)?.label||e.a)+' ['+e.type+']').join('\n')||'None'}`;panel.append(detail)}
+function transform(){world.setAttribute('transform',`translate(${tx},${ty}) scale(${scale})`)}
+function fit(){let vis=visibleNodes(),pts=nodes.filter(n=>vis.has(n.id)).map(n=>positions.get(n.id));if(!pts.length)return;let xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),minx=Math.min(...xs)-100,maxx=Math.max(...xs)+200,miny=Math.min(...ys)-80,maxy=Math.max(...ys)+80;let w=svg.clientWidth,h=svg.clientHeight;scale=Math.min(2.5,Math.max(.06,Math.min((w-55)/(maxx-minx),(h-55)/(maxy-miny))));tx=(w-(minx+maxx)*scale)/2;ty=(h-(miny+maxy)*scale)/2;transform()}
+function zoomAt(f,x,y){let next=Math.max(.04,Math.min(12,scale*f));tx=x-(x-tx)*next/scale;ty=y-(y-ty)*next/scale;scale=next;transform()}
+svg.addEventListener('wheel',e=>{e.preventDefault();let r=svg.getBoundingClientRect();zoomAt(Math.exp(-e.deltaY*.001),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+svg.addEventListener('pointerdown',e=>{if(e.button!==0)return;let g=e.target.closest('.node');drag={kind:g?'node':'pan',id:g?.dataset.id,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,tx,ty};moved=false;svg.setPointerCapture(e.pointerId);svg.classList.add('dragging')});
+svg.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;if(Math.abs(e.clientX-drag.startX)+Math.abs(e.clientY-drag.startY)>4)moved=true;if(drag.kind==='pan'){tx=drag.tx+e.clientX-drag.startX;ty=drag.ty+e.clientY-drag.startY;transform()}else{let shiftX=dx/scale,shiftY=dy/scale;let movedIds=new Set([drag.id]),first=new Set();for(const ed of edges)if(visibleEdge(ed)&&(ed.a===drag.id||ed.b===drag.id))first.add(ed.a===drag.id?ed.b:ed.a);let second=new Set();for(const ed of edges)if(visibleEdge(ed)){if(first.has(ed.a)&&ed.b!==drag.id&&!first.has(ed.b))second.add(ed.b);if(first.has(ed.b)&&ed.a!==drag.id&&!first.has(ed.a))second.add(ed.a)}for(const [id,weight] of [[drag.id,1],...[...first].map(x=>[x,.45]),...[...second].map(x=>[x,.15])]){let p=positions.get(id);if(p){p.x+=shiftX*weight;p.y+=shiftY*weight}}updatePositions()}drag.lastX=e.clientX;drag.lastY=e.clientY});
+svg.addEventListener('pointerup',e=>{if(drag&&!moved){selected=drag.kind==='node'?drag.id:null;render()}drag=null;svg.classList.remove('dragging')});svg.addEventListener('pointercancel',()=>{drag=null;svg.classList.remove('dragging')});
+$('zoomIn').onclick=()=>zoomAt(1.3,svg.clientWidth/2,svg.clientHeight/2);$('zoomOut').onclick=()=>zoomAt(1/1.3,svg.clientWidth/2,svg.clientHeight/2);
+$('size').oninput=()=>{nodeScale=Number($('size').value)/100;$('sizeValue').textContent=$('size').value+'%';render()};
+for(const id of ['search','functions','symbols','packages','calls','imports','references','provenance'])$(id).addEventListener('input',()=>{render()});$('fit').onclick=fit;$('reset').onclick=()=>{initPositions();render();fit()};
+$('files').onchange=async()=>{let files=[...$('files').files];sources=await Promise.all(files.filter(f=>/\.pyi?$/i.test(f.name)).map(async f=>({name:f.webkitRelativePath||f.name,code:await f.text()})));$('filesLabel').textContent=sources.length?sources.map(s=>s.name).join(', '):'No valid Python files selected'};
+function analyze(){let files=[...sources],paste=$('source').value.trim();if(paste)files.push({name:'pasted_script.py',code:paste});if(!files.length){$('status').textContent='Please upload a .py file or paste Python code.';return}try{let result=parse(files);nodes=result.nodes;edges=result.edges;selected=null;initPositions();render();fit();$('status').textContent=`Analyzed ${files.length} file(s). This is static, best-effort analysis.`;$('jsonExport').disabled=false;$('htmlExport').disabled=false}catch(e){$('status').textContent='Analysis failed: '+e.message}}
+$('analyze').onclick=analyze;$('clear').onclick=()=>{sources=[];$('files').value='';$('filesLabel').textContent='No uploaded files';$('source').value='';nodes=[];edges=[];selected=null;render();$('status').textContent='Cleared';$('jsonExport').disabled=true;$('htmlExport').disabled=true};
+$('example').onclick=()=>{$('source').value=`import numpy as np\nfrom pathlib import Path\n\ndef read_data(path):\n    return np.load(path)\n\ndef transform(data):\n    return np.asarray(data)\n\ndef main():\n    path = Path('input.npy')\n    data = read_data(path)\n    return transform(data)\n\nclass Processor:\n    def run(self, path):\n        return main()\n`;analyze()};
+function download(name,text,mime){let blob=new Blob([text],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+$('jsonExport').onclick=()=>download('dependency_graph.json',JSON.stringify({nodes,edges},null,2),'application/json');
+$('htmlExport').onclick=()=>{let copy=document.documentElement.cloneNode(true);copy.querySelector('#source').textContent=$('source').value;let script=copy.querySelector('script');let embedded=JSON.stringify({nodes,edges,positions:[...positions],sources}).replace(/</g,'\\u003c');script.textContent+='\n;(()=>{const saved='+embedded+';nodes=saved.nodes;edges=saved.edges;positions=new Map(saved.positions);sources=saved.sources;render();fit();document.getElementById("status").textContent="Saved dependency graph (you can analyze new code too).";document.getElementById("jsonExport").disabled=false;document.getElementById("htmlExport").disabled=false;})();';download('dependency_network.html','<!doctype html>\n'+copy.outerHTML,'text/html')};
+render();
+</script></body></html>
