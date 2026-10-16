@@ -1,5 +1,6 @@
 # Python Code Dependency Explorer
-[https://yanz-24.github.io/PyCodeGraph/](https://yanz-24.github.io/python-code-dependency-explorer/)
+https://yanz-24.github.io/python-code-dependency-explorer/
+
 ## About
 
 Python Code Dependency Explorer is a free, interactive tool for visualizing the structure of Python code. Upload a Python script or paste your code to explore its functions, imports, and package dependencies through an interactive network. The tool was vibe coded as a lightweight, accessible way to understand how different parts of a Python script relate to one another, without installing additional software.
